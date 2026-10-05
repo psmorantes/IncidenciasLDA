@@ -52,63 +52,6 @@ document.querySelectorAll('.reveal').forEach(element => {
     observer.observe(element);
 });
 
-// Make
-document.getElementById('rimo-contact-form').addEventListener('submit', async function(event) {
-    event.preventDefault(); // Evita la recarga de la página
-
-    const form = event.target;
-    const submitBtn = document.getElementById('submit-btn');
-    const statusDiv = document.getElementById('form-status');
-    
-    // 1. Verificación pasiva del Honeypot
-    const honeypot = form.elements['_honeypot'].value;
-    if (honeypot !== "") {
-        console.warn("Interacción automatizada detectada. Petición abortada.");
-        return; 
-    }
-
-    // 2. Construcción del Payload (Actualizado con Telegram)
-    const formData = {
-        nombre: form.elements['nombre'].value,
-        telegram: form.elements['telegram'].value, // <-- Aquí capturamos el nuevo campo
-        correo: form.elements['correo'].value,
-        interes: form.elements['interes'].value,
-        fecha: new Date().toISOString()
-    };
-
-    // LA DIRECCIÓN DE MAKE: Aquí pones la URL que te dará Make
-    const makeWebhookUrl = 'https://hook.us2.make.com/w03q8lanu347n6094qv0ox5s6dm7vtht';
-
-    try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Procesando...';
-
-        // EL LLAMADO INSTANTÁNEO: Aquí es donde la página se comunica con Make
-        const response = await fetch(makeWebhookUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        });
-
-        if (response.ok) {
-            statusDiv.textContent = '¡Solicitud enviada con éxito! Confirmaremos su requerimiento a la brevedad.';
-            statusDiv.className = 'mt-4 text-sm font-medium text-center rounded-md p-3 bg-green-100 text-green-800 block';
-            form.reset();
-        } else {
-            throw new Error('Código de estado HTTP no exitoso.');
-        }
-    } catch (error) {
-        statusDiv.textContent = 'Ocurrió un error de conexión. Por favor, intente contactarnos directamente.';
-        statusDiv.className = 'mt-4 text-sm font-medium text-center rounded-md p-3 bg-red-100 text-red-800 block';
-        console.error('Traza del error Fetch:', error);
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Solicitar Asesoría';
-    }
-});
-
 // --- LÓGICA DEL MODO OSCURO (Automático / Manual) ---
 
 const themeToggleBtn = document.getElementById('theme-toggle');
@@ -165,3 +108,35 @@ themeToggleBtn.addEventListener('click', () => {
     }
 });
 
+// ==========================================
+// MOSTRAR MENSAJE DE ÉXITO TRAS ENVIAR PHP
+// ==========================================
+document.addEventListener("DOMContentLoaded", function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    if (urlParams.has('estado') && urlParams.get('estado') === 'enviado') {
+        const statusDiv = document.getElementById('form-status');
+        const formElement = document.getElementById('rimo-contact-form');
+        
+        if (statusDiv) {
+            // Mostramos el mensaje
+            statusDiv.textContent = '¡Gracias por comunicarte! Nos comunicaremos contigo a la brevedad posible.';
+            statusDiv.className = 'mt-4 text-sm font-medium text-center rounded-md p-3 bg-green-100 text-green-800 block';
+            
+            // Scroll suave hacia el formulario
+            if (formElement) {
+                setTimeout(() => {
+                    formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            }
+            
+            // Limpiamos la URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // NUEVO: Ocultamos el mensaje después de 5 segundos
+            setTimeout(() => {
+                statusDiv.className = 'hidden mt-4 text-sm font-medium text-center rounded-md p-3';
+            }, 5000); 
+        }
+    }
+});
